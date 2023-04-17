@@ -10,62 +10,78 @@
   <h1>Practica de Login con Google</h1>
   <br>
   <h4>Ingre con Google</h4>
-  <button id="btnLogin">Iniciar Sesion</button>
+  <button id="btnLogin" onclick="loginRedirectGoogle()">Iniciar Sesión</button>
 </body>
-
 <script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-app.js";
-  // firebase auth google
-  import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-auth.js";
-  // Your web app's Firebase configuration
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.19.0/firebase-app.js';
+  import { 
+    GoogleAuthProvider, 
+    getAuth, 
+    signInWithRedirect,
+    getRedirectResult  } from "https://www.gstatic.com/firebasejs/9.19.0/firebase-auth.js";
+
+  // TODO: Replace the following with your app's Firebase project configuration
   const firebaseConfig = {
-    apiKey: "AIzaSyDOr89Rka2DBNYtAfj6eGeVS9b-BnX-6y8",
-    authDomain: "djlogin-8ad30.firebaseapp.com",
-    projectId: "djlogin-8ad30",
-    storageBucket: "djlogin-8ad30.appspot.com",
-    messagingSenderId: "18556881093",
-    appId: "1:18556881093:web:f7c0e0a8976185f6b748ac"
+    apiKey: "AIzaSyDXz54sVqJAwwU_kBaNDv41BW6uyTMwsKs",
+    authDomain: "djlogin-1ff65.firebaseapp.com",
+    projectId: "djlogin-1ff65",
+    storageBucket: "djlogin-1ff65.appspot.com",
+    messagingSenderId: "180960786508",
+    appId: "1:180960786508:web:f53ce8aaab3ac9dc379ce9"
   };
 
-  // Initialize Firebase
   const app = initializeApp(firebaseConfig);
 
-  console.log('-->', app)
+  console.log(app)
 
+  const googleProvider = new GoogleAuthProvider();
+  const auth = getAuth(app);
 
-  function loginGoogle () {
-    const provider = new GoogleAuthProvider();
-    provider.addScope('https://www.googleapis.com/auth/contacts.readonly');
-    
-
-    const auth = getAuth();
-    signInWithPopup(auth, provider)
-      .then((result) => {
-        // This gives you a Google Access Token. You can use it to access the Google API.
-        const credential = GoogleAuthProvider.credentialFromResult(result);
-        const token = credential.accessToken;
-        // The signed-in user info.
-        const user = result.user;
-        console.log('===>', user);
-        // IdP data available using getAdditionalUserInfo(result)
-        // ...
-      }).catch((error) => {
-        // Handle Errors here.
-        const errorCode = error.code;
-        const errorMessage = error.message;
-        // The email of the user's account used.
-        const email = error.customData.email;
-        console.log('==error=>', errorMessage);
-        // The AuthCredential type that was used.
-        const credential = GoogleAuthProvider.credentialFromError(error);
-        // ...
-      });
+  async function loginRedirectGoogle () {
+    await signInWithRedirect(auth, googleProvider);
   }
 
-  
-  document.getElementById('btnLogin').addEventListener('click', loginGoogle)
+  async function loginDj(idToken) {
+    const data = {
+      token_id: idToken
+    }
 
+    fetch('http://127.0.0.1:8000/api/google-login/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data) 
+    })
+    .then(response => response.json())
+    .then(data => console.log(data))
+  }
+
+  getRedirectResult(auth)
+  .then((result) => {
+    // This gives you a Google Access Token. You can use it to access Google APIs.
+    const credential = GoogleAuthProvider.credentialFromResult(result);
+    const token = credential.accessToken;
+
+    // The signed-in user info.
+    const user = result.user;
+    console.log(credential);
+    loginDj(credential.idToken)
+    // ...
+  }).catch((error) => {
+    // Handle Errors here.
+    const errorCode = error.code;
+    const errorMessage = error.message;
+    // The email of the user's account used.
+    const email = error.customData.email;
+    // The AuthCredential type that was used.
+    const credential = GoogleAuthProvider.credentialFromError(error);
+    // ...
+  });
+
+
+
+  window.loginRedirectGoogle = loginRedirectGoogle
 
 </script>
 </html>
